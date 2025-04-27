@@ -2,6 +2,10 @@
 
 本指南提供了为悟空机器学习集成项目搭建Nvidia Jetson Xavier NX开发环境的详细步骤。
 
+> **注意**：本指南基于实际环境搭建经验编写，详细的原始环境搭建过程记录可参考：[wukong.paddlex环境搭建.md](../ref_materials/edge_server/wukong.paddlex环境搭建.md)
+
+注意：在Jetson Xavier NX上安装PaddlePaddle-GPU的唯一可靠方法是源码编译，直接使用x86预编译包会导致架构和CUDA版本冲突。
+
 ## 1. 硬件要求
 
 - Nvidia Jetson Xavier NX开发套件
@@ -89,48 +93,89 @@
    ```bash
    # 验证CUDA安装
    nvcc --version
-   
+
    # 验证cuDNN安装
    dpkg -l | grep cudnn
    ```
 
-2. **安装PaddlePaddle 3.0.0-rc GPU版本：**
+2. **安装PaddlePaddle 3.0.0 GPU版本：**
+
+   > **注意**：对于Jetson Xavier NX，我们需要使用预编译的wheel包，而不是通过pip直接安装。
+
+   从百度网盘下载预编译的wheel包：
+
    ```bash
-   python3 -m pip install paddlepaddle-gpu==3.0.0rc0.post110 -f https://www.paddlepaddle.org.cn/whl/linux/mkl/avx/stable.html
+   # 下载链接
+   # 链接: https://pan.baidu.com/s/1Baw19iZv5N_9kih4i8vtbA?pwd=geaa 提取码: geaa
+
+   # 升级pip和相关工具
+   python3 -m pip install --upgrade pip setuptools wheel
+
+   # 安装下载的wheel包
+   pip install paddlepaddle_gpu-3.0.0-cp38-cp38-linux_aarch64.whl
+
+   # 可能需要安装的额外依赖
+   pip install onnx
    ```
 
-3. **验证PaddlePaddle安装：**
+3. **修复numpy.bool兼容性问题：**
+
+   ```bash
+   # 如果运行时出现np.bool错误，需要进行以下修复
+   sudo vi /usr/lib/python3/dist-packages/pandas/util/testing.py
+
+   # 在import numpy as np行后添加：
+   np.bool = np.bool_
+   ```
+
+4. **验证PaddlePaddle安装：**
+
    ```bash
    python3 -c "import paddle; print(paddle.__version__); print(paddle.device.is_compiled_with_cuda())"
    ```
 
 ## 4. PaddleX安装
 
-1. **安装PaddleX 3.0.0-rc：**
+1. **安装PaddleX：**
+
+   同样，我们需要使用预编译的wheel包：
+
    ```bash
-   python3 -m pip install paddlex==3.0.0rc
+   # 使用从百度网盘下载的wheel包
+   pip install paddlex-3.0.0-py3-none-any.whl
    ```
 
 2. **验证PaddleX安装：**
+
    ```bash
    python3 -c "import paddlex; print(paddlex.__version__)"
+   ```
+
+3. **测试PaddleX功能：**
+
+   ```bash
+   # 上传测试图片后运行
+   paddlex --pipeline OCR --input 测试图片.png --use_doc_orientation_classify False --use_doc_unwarping False --use_textline_orientation False --device gpu:0 --save_path ./output
    ```
 
 ## 5. 安装额外的库
 
 1. **安装支持CUDA的OpenCV（如果尚未安装）：**
+
    ```bash
    # OpenCV应该包含在JetPack中，使用以下命令验证：
    python3 -c "import cv2; print(cv2.__version__); print(cv2.getBuildInformation())"
    ```
 
 2. **安装可视化和实用工具库：**
+
    ```bash
    python3 -m pip install matplotlib scikit-learn pandas
    python3 -m pip install visualdl tensorboard
    ```
 
 3. **安装额外的PaddlePaddle生态系统包：**
+
    ```bash
    python3 -m pip install paddleslim  # 用于模型优化
    python3 -m pip install paddle2onnx  # 用于模型转换
@@ -193,7 +238,7 @@ class SimpleNet(paddle.nn.Layer):
     def __init__(self):
         super(SimpleNet, self).__init__()
         self.fc = paddle.nn.Linear(10, 1)
-        
+
     def forward(self, x):
         return self.fc(x)
 
@@ -259,18 +304,18 @@ def benchmark_matmul(size=1000, iterations=100):
     # 创建随机矩阵
     a = paddle.randn([size, size], dtype='float32')
     b = paddle.randn([size, size], dtype='float32')
-    
+
     # 预热
     for _ in range(10):
         c = paddle.matmul(a, b)
-    
+
     # 基准测试
     start_time = time.time()
     for _ in range(iterations):
         c = paddle.matmul(a, b)
         paddle.device.cuda.synchronize()
     end_time = time.time()
-    
+
     elapsed = end_time - start_time
     return elapsed / iterations
 
@@ -305,7 +350,7 @@ class TestModel(paddle.nn.Layer):
         self.flatten = paddle.nn.Flatten()
         self.fc1 = paddle.nn.Linear(64 * 120 * 160, 512)
         self.fc2 = paddle.nn.Linear(512, 10)
-        
+
     def forward(self, x):
         x = self.pool(paddle.nn.functional.relu(self.conv1(x)))
         x = self.pool(paddle.nn.functional.relu(self.conv2(x)))
@@ -364,17 +409,20 @@ python3 benchmark_inference.py
 ### 9.2 监控工具
 
 1. **监控GPU使用情况：**
+
    ```bash
    sudo tegrastats
    ```
 
 2. **监控系统资源：**
+
    ```bash
    sudo apt install -y htop
    htop
    ```
 
 3. **监控温度：**
+
    ```bash
    cat /sys/devices/virtual/thermal/thermal_zone*/temp
    ```
