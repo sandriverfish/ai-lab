@@ -11,7 +11,15 @@ print("OpenCV版本:", cv2.__version__)
 print("PaddlePaddle版本:", paddle.__version__)
 print("PaddleX版本:", paddlex.__version__)
 print("CUDA可用:", paddle.device.is_compiled_with_cuda())
-print("GPU数量:", paddle.device.get_device_count())
+
+# 尝试使用 paddle.CUDAPlace 来检测GPU数量
+try:
+    cuda_place = paddle.CUDAPlace(0)
+    gpu_count = 1  # 如果能创建 CUDAPlace，则至少有一个 GPU
+    print("GPU数量:", gpu_count)
+except Exception as e:
+    print("无法检测到GPU:", e)
+    gpu_count = 0
 
 # 测试简单的Paddle操作
 if paddle.device.is_compiled_with_cuda():
