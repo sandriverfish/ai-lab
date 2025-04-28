@@ -1,0 +1,7 @@
+itx_board
+memory_slot
+msata_slot
+hdmi_port
+usb_port
+ethernet_port
+power_connector
