@@ -173,3 +173,5 @@ cython_debug/
 # paddlex
 PaddleX/
 test/
+wukong_v15/data/itx/output/
+output/

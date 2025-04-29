@@ -1,7 +1,7 @@
-itx_board
-memory_slot
-msata_slot
-hdmi_port
-usb_port
-ethernet_port
-power_connector
+0 itx_board
+1 memory_slot
+2 msata_slot
+3 hdmi_port
+4 usb_port
+5 ethernet_port
+6 power_connector

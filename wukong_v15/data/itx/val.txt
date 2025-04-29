@@ -1,0 +1,4 @@
+/home/nvidia/ai-lab/wukong_v15/data/itx/images/itx_board_007.jpg 0
+/home/nvidia/ai-lab/wukong_v15/data/itx/images/itx_board_008.jpg 0
+/home/nvidia/ai-lab/wukong_v15/data/itx/images/itx_board_000.jpg 0
+/home/nvidia/ai-lab/wukong_v15/data/itx/images/itx_board_003.jpg 0

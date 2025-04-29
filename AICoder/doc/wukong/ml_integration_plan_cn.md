@@ -426,15 +426,70 @@ def merge_and_validate_results(template_result, dl_result, method_selection, job
    - 创建目标检测和分类的标注流程
    - 实施数据增强策略
 
+PaddleX为每个模块提供了数据验证功能，只有通过验证的数据才能用于模型训练。
+
+使用以下命令验证数据集格式是否正确
+```
+python main.py -c paddlex/configs/modules/[任务类型]/[模型名称].yaml \  
+    -o Global.mode=check_dataset \  
+    -o Global.dataset_dir=[数据集路径]
+
+```
+
 2. **初始模型训练**
    - 训练简单的目标检测模型（PP-PicoDet）
    - 训练组件分类模型（MobileNetV3）
    - 根据基准指标评估性能
 
+完成数据验证后，可以使用以下命令进行模型训练
+```
+python main.py -c paddlex/configs/modules/[任务类型]/[模型名称].yaml \  
+    -o Global.mode=train \  
+    -o Global.dataset_dir=[数据集路径]
+```
+
+其他参数例如 -o Global.device=gpu:0,1
+
+训练过程中，PaddleX会自动保存模型权重文件，默认保存在output目录下。训练完成后，会产生以下文件：train_result.json：训练结果记录，train.log：训练日志
+config.yaml：训练配置文件，模型权重相关文件：.pdparams、.pdema、.pdopt.pdstate、.pdiparams、.pdmodel等
+
+模型评估
+
+模型推理
+```
+python main.py -c paddlex/configs/modules/[任务类型]/[模型名称].yaml \  
+    -o Global.mode=predict \  
+    -o Predict.model_dir="./output/best_model/inference" \  
+    -o Predict.input="[输入数据路径]"
+
+```
+
 3. **集成原型**
    - 开发简单的ML模型推理API
    - 创建混合方法的决策逻辑
    - 测试与现有代码库的集成
+
+训练好的模型可以直接集成到PaddleX产线中，也可以集成到您自己的项目中。根据不同的任务类型，模型可以集成到相应的PaddleX产线中，只需替换模型路径即可完成相关产线的模型更新。
+
+除了命令行方式，您还可以使用PaddleX的Python API进行模型创建和推理：
+
+```
+from paddlex import create_model  
+  
+# 创建模型  
+model = create_model(model_name="模型名称", model_dir="模型路径")  
+  
+# 运行推理  
+output = model.predict("输入图像路径", batch_size=1)  
+  
+# 处理结果  
+for res in output:  
+    res.print()                      # 打印结果  
+    res.save_to_img("./output/")     # 保存可视化结果  
+    res.save_to_json("./output/")    # 保存JSON结果
+
+```
+
 
 ### 3.3 第3阶段：核心实现（第5-8周）
 

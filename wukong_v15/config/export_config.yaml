@@ -1,0 +1,7 @@
+Global:
+  model: MobileNetV3_small_x1_0
+  device: gpu
+  output: data/itx/output/mobilenetv3_small/best_model/inference
+
+Export:
+  weight_path: data/itx/output/mobilenetv3_small/best_model/best_model.pdparams
