@@ -151,13 +151,31 @@ ssh nvidia@192.168.1.91 "cat /etc/nv_tegra_release"
    ```bash
    git clone https://github.com/PaddlePaddle/PaddleX.git
    cd PaddleX
-   # pip install -e ".[base]"
-   # 安装 PaddleX 全部插件
-   # pip install -r requirements.txt
-   python setup.py install
-   paddlex --install
+   pip install -e ".[base]"
+   # 注释tool_helper
+
+   # cmake 3.28.3
+   # 核心问题在于 ​onnxoptimizer 编译时 CMake 版本过低​（需要 ≥3.22）和 ​ARM架构编译兼容性问题。
+   sudo apt remove cmake
+   wget https://cmake.org/files/v3.28/cmake-3.28.3.tar.gz
+   tar -xzvf cmake-3.28.3.tar.gz
+   cd cmake-3.28.3
+   ./bootstrap --prefix=/usr/local
+   make -j$(nproc)
+   sudo make install
+
+   pip install blobfile ml_dtypes tiktoken
+
+   paddlex -- install PaddleClas PaddleDetection PaddleOCR
+   # 安装 PaddleX 插件
 
    ```
+
+期间的告警
+ERROR: pip's dependency resolver does not currently take into account all the packages that are installed. This behaviour is the source of the following dependency conflicts.
+paddlenlp 3.0.0b4.post20250429 requires blobfile, which is not installed.
+paddlenlp 3.0.0b4.post20250429 requires ml_dtypes, which is not installed.
+paddlenlp 3.0.0b4.post20250429 requires tiktoken, which is not installed.
 
 2. **验证PaddleX安装：**
 
@@ -169,8 +187,13 @@ ssh nvidia@192.168.1.91 "cat /etc/nv_tegra_release"
 3. **测试PaddleX功能：**
 
    ```bash
-   # 上传测试图片后运行
-   paddlex --pipeline OCR --input 测试图片.png --use_doc_orientation_classify False --use_doc_unwarping False --use_textline_orientation False --device gpu:0 --save_path ./output
+    pip install "paddlex[cv]==3.0.0rc1"
+
+    paddlex --pipeline image_classification \
+        --input https://paddle-model-ecology.bj.bcebos.com/paddlex/imgs/demo_image/general_image_classification_001.jpg \
+        --device gpu:0 \
+        --save_path ./output/ \
+        --topk 5
    ```
 
 ## 5. 安装额外的库
