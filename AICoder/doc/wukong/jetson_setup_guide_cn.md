@@ -146,17 +146,24 @@ ssh nvidia@192.168.1.91 "cat /etc/nv_tegra_release"
 
 1. **安装PaddleX：**
 
-   同样，我们需要使用预编译的wheel包：
+   考虑到需要进行数据训练，进行源码安装
 
    ```bash
-   # 使用从百度网盘下载的wheel包
-   pip install paddlex-3.0.0-py3-none-any.whl
+   git clone https://github.com/PaddlePaddle/PaddleX.git
+   cd PaddleX
+   # pip install -e ".[base]"
+   # 安装 PaddleX 全部插件
+   # pip install -r requirements.txt
+   python setup.py install
+   paddlex --install
+
    ```
 
 2. **验证PaddleX安装：**
 
    ```bash
    python3 -c "import paddlex; print(paddlex.__version__)"
+   # 3.0.0 rc1
    ```
 
 3. **测试PaddleX功能：**
