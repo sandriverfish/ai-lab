@@ -97,6 +97,24 @@ For effective training, we recommend the following minimum dataset sizes:
    - Check for focus, exposure, and framing issues
    - Retake problematic images
 
+### 2.4 数据检查结果
+
+在对`data/itx`目录下的数据进行检查后，确认以下内容：
+
+1. **数据类型**：
+   - 数据包含产品图像（如`itx_board`）、组件图像（如`memory_slot`、`usb_port`等）以及背景图像，符合要求。
+
+2. **标注类型**：
+   - 标注文件（如`annotations.json`、`train.json`、`val.json`）包含边界框（`bbox`）、分割掩码（`segmentation`）和分类标签（`category_id`），符合COCO格式。
+
+3. **文件格式**：
+   - 标注文件采用COCO格式，包含`images`、`annotations`和`categories`字段，符合标准。
+
+4. **一致性**：
+   - 标签文件`labels.txt`中的类别名称与标注文件中的`categories`字段一致，例如`itx_board`、`memory_slot`等。
+
+结论：数据标注文件和标签文件符合数据准备指南中的要求，可以用于模型训练。
+
 ## 3. Data Annotation
 
 ### 3.1 Annotation Types
