@@ -1,0 +1,1 @@
+python3 /home/nvidia/ai-lab/PaddleX/main.py -c /home/nvidia/ai-lab/wukong_v15/config/config.yaml -o Global.mode=train

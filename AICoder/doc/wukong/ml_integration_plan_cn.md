@@ -453,6 +453,11 @@ python main.py -c paddlex/configs/modules/[任务类型]/[模型名称].yaml \
 训练过程中，PaddleX会自动保存模型权重文件，默认保存在output目录下。训练完成后，会产生以下文件：train_result.json：训练结果记录，train.log：训练日志
 config.yaml：训练配置文件，模型权重相关文件：.pdparams、.pdema、.pdopt.pdstate、.pdiparams、.pdmodel等
 
+使用的命令
+```
+python3 /home/nvidia/ai-lab/PaddleX/main.py -c /home/nvidia/ai-lab/wukong_v15/config/config.yaml -o Global.mode=train
+```
+
 模型评估
 
 模型推理
@@ -461,6 +466,9 @@ python main.py -c paddlex/configs/modules/[任务类型]/[模型名称].yaml \
     -o Global.mode=predict \  
     -o Predict.model_dir="./output/best_model/inference" \  
     -o Predict.input="[输入数据路径]"
+
+
+python3 /home/nvidia/ai-lab/wukong_v15/scripts/predict_api.py
 
 ```
 

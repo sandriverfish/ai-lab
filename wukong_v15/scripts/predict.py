@@ -1,61 +1,94 @@
 import os
-import sys
 import json
 import paddlex as pdx
+import numpy as np
 
-def predict_images(model_dir, image_dir, output_dir):
-    """
-    对指定目录下的图片进行推理预测并保存结果
-    Args:
-        model_dir (str): 模型目录路径
-        image_dir (str): 图片目录路径
-        output_dir (str): 结果保存目录
-    """
-    # 确保输出目录存在
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
-        
-    # 加载模型
-    model = pdx.create_model(
-        model_name="MobileNetV3_small_x1_0",
-        model_dir=model_dir
-    )
-    
-    # 获取所有图片文件
-    image_files = [f for f in os.listdir(image_dir) if f.endswith(('.jpg', '.jpeg', '.png'))]
-    
-    # 处理每张图片
-    for image_file in image_files:
-        image_path = os.path.join(image_dir, image_file)
-        base_name = os.path.splitext(image_file)[0]
-        
-        # 执行推理
-        result = model.predict(image_path)
-        
-        # 保存结果图片
-        result_img_path = os.path.join(output_dir, f"{base_name}_res.jpg")
-        result_json_path = os.path.join(output_dir, f"{base_name}_res.json")
-        
-        # 保存结果到JSON文件
-        with open(result_json_path, 'w', encoding='utf-8') as f:
-            json.dump(result, f, ensure_ascii=False, indent=2)
-            
-        print(f"处理完成: {image_file}")
-        print(f"结果已保存: {result_json_path}")
+class NumpyEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, np.integer):
+            return int(obj)
+        elif isinstance(obj, np.floating):
+            return float(obj)
+        elif isinstance(obj, np.ndarray):
+            return obj.tolist()
+        return super().default(obj)
 
-def main():
-    # 设置路径
-    model_dir = "/home/nvidia/ai-lab/wukong_v15/data/itx/output/mobilenetv3_small/best_model/inference"
-    image_dir = "/home/nvidia/ai-lab/test/test_images"
-    output_dir = "/home/nvidia/ai-lab/test/output"
+def format_prediction_result(raw_result):
+    """
+    格式化预测结果，只保留必要信息
+    """
+    if isinstance(raw_result, list):
+        raw_result = raw_result[0]  # 获取第一个结果
     
+    # 提取关键信息
+    formatted_result = {
+        'class_ids': raw_result.get('class_ids', []),
+        'scores': raw_result.get('scores', []),
+        'label_names': raw_result.get('label_names', []),
+        'input_path': raw_result.get('input_path', '')
+    }
+    
+    # 只保留前5个最高置信度的结果
+    if len(formatted_result['class_ids']) > 5:
+        formatted_result['class_ids'] = formatted_result['class_ids'][:5]
+        formatted_result['scores'] = formatted_result['scores'][:5]
+        formatted_result['label_names'] = formatted_result['label_names'][:5]
+    
+    return formatted_result
+
+def predict_single_image(model_dir, image_path, save_dir):
     try:
-        predict_images(model_dir, image_dir, output_dir)
-        print("所有图片处理完成!")
+        os.makedirs(save_dir, exist_ok=True)
+        base_name = os.path.splitext(os.path.basename(image_path))[0]
+        
+        # 加载模型
+        model = pdx.create_model(
+            model_name="MobileNetV3_small_x1_0",
+            model_dir=model_dir
+        )
+        
+        # 执行预测
+        results = model.predict(image_path)
+        
+        # 格式化结果
+        formatted_results = format_prediction_result(results)
+        
+        # 保存结果
+        result_file = os.path.join(save_dir, f"{base_name}_result.json")
+        with open(result_file, 'w', encoding='utf-8') as f:
+            json.dump(formatted_results, f, cls=NumpyEncoder, ensure_ascii=False, indent=2)
+            
+        print(f"预测完成！结果已保存到: {result_file}")
+        print("\n预测结果:")
+        print(json.dumps(formatted_results, cls=NumpyEncoder, ensure_ascii=False, indent=2))
+        
+        return formatted_results
         
     except Exception as e:
-        print(f"发生错误: {e}")
-        sys.exit(1)
+        print(f"预测过程中出现错误: {e}")
+        raise e
+
+def predict_directory(model_dir, image_dir, save_dir):
+    image_files = [f for f in os.listdir(image_dir) 
+                   if f.lower().endswith(('.jpg', '.jpeg', '.png', '.bmp'))]
+    
+    results = {}
+    for image_file in image_files:
+        print(f"\n处理图片: {image_file}")
+        image_path = os.path.join(image_dir, image_file)
+        result = predict_single_image(model_dir, image_path, save_dir)
+        results[image_file] = result
+    
+    # 保存汇总结果
+    summary_file = os.path.join(save_dir, "prediction_summary.json")
+    with open(summary_file, 'w', encoding='utf-8') as f:
+        json.dump(results, f, cls=NumpyEncoder, ensure_ascii=False, indent=2)
+    
+    print(f"\n所有预测完成！汇总结果保存在: {summary_file}")
 
 if __name__ == "__main__":
-    main()
+    model_dir = "/home/nvidia/ai-lab/wukong_v15/data/itx/output/mobilenetv3_small/best_model/inference"
+    test_image_dir = "/home/nvidia/ai-lab/test/test_images"
+    output_dir = "/home/nvidia/ai-lab/test/output"
+    
+    predict_directory(model_dir, test_image_dir, output_dir)
