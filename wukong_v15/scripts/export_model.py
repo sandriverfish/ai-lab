@@ -4,7 +4,7 @@ import paddlex as pdx
 def main():
     try:
         # Define model paths
-        base_dir = "/home/nvidia/ai-lab/wukong_v15/data/itx/output/mobilenetv3_small"
+        base_dir = "/home/nvidia/ai-lab/output/mobilenetv3_small"
         model_dir = os.path.join(base_dir, "best_model")
         
         if not os.path.exists(model_dir):
@@ -12,7 +12,7 @@ def main():
         
         # Create model with parameters loaded from best_model
         model = pdx.create_model(
-            model_name="MobileNetV3_small",
+            model_name="MobileNetV3_small_x1_0",
             model_dir=model_dir
         )
         
