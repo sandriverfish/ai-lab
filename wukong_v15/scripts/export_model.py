@@ -12,7 +12,7 @@ def main():
         
         # Create model with parameters loaded from best_model
         model = pdx.create_model(
-            model_name="MobileNetV3_small_x1_0",
+            model_name="MobileNetV3_small",
             model_dir=model_dir
         )
         
@@ -21,7 +21,9 @@ def main():
         if not os.path.exists(save_dir):
             os.makedirs(save_dir)
             
-        model.export(save_dir)
+        model.export(save_dir, 
+                     input_shape=[3, 224, 224]
+                     )
         print(f"Model exported successfully to {save_dir}")
 
     except Exception as e:
