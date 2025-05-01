@@ -27,30 +27,31 @@ class CustomKeypointDataset(KeypointTopDownCocoDataset):
         """
         imid2path = {}
 
-        # If --infer_img is used, self.custom_images should be populated
-        if hasattr(self, 'custom_images') and self.custom_images:
-            # For inference on specific images, create mapping based on these
-            for i, img_path in enumerate(self.custom_images): # Add index 'i'
-                # Create dummy annotation data for single image inference
-                # The structure should match what the transforms expect
-                dummy_ann = {
-                    'im_id': i, # Add image ID using the index
-                    'image': img_path, # Use 'image' key as often expected by transforms
-                    'image_file': img_path, # Keep original key too if needed
-                    'bbox': np.array([0, 0, 10, 10], dtype=np.float32), # Dummy bbox, might be refined later
-                    'center': np.array([5, 5]),  # Dummy center
-                    'scale': np.array([1.0, 1.0]), # Dummy scale
-                    'joints_3d': np.zeros((num_joints, 3), dtype=np.float32), # Use num_joints
-                    'joints_3d_visible': np.zeros((num_joints, 3), dtype=np.float32), # Use num_joints
-                    # Add other fields expected by transforms if necessary
-                }
-                self.db.append(dummy_ann)
-            print(f"Custom parse dataset created db with {len(self.db)} entries.")
+        # The logic for creating dummy annotations and populating self.db
+        # is now handled within the set_images method and its nested
+        # custom_parse_dataset function.
+        # get_imid2path should primarily focus on returning the mapping
+        # if it's already generated or based on standard dataset loading.
 
-        # Replace parse_dataset with our custom version for this instance
-        self.parse_dataset = lambda: custom_parse_dataset(self)
-        # Call the overridden parse_dataset immediately to populate self.db
-        self.parse_dataset()
+        # Example: If using standard COCO loading, the parent's logic might be sufficient
+        # or needs adaptation here based on how self.roidbs or similar is populated.
+        if hasattr(self, 'roidbs') and self.roidbs:
+             for record in self.roidbs:
+                 if 'id' in record and 'im_file' in record:
+                     imid2path[record['id']] = record['im_file']
+        elif hasattr(self, 'db') and self.db: # If db populated by custom_parse_dataset
+            for i, ann in enumerate(self.db):
+                # Assuming 'image_file' holds the path and we use index as ID for custom images
+                imid2path[i] = ann.get('image_file', ann.get('image'))
+
+        if not imid2path and hasattr(self, 'custom_images') and self.custom_images:
+             print("Warning: get_imid2path() called but custom_images are set. "
+                   "Ensure set_images() was called and populated the dataset correctly.")
+        elif not imid2path:
+             print("Warning: get_imid2path() is returning an empty dictionary. "
+                   "Ensure dataset loading or set_images() populates necessary structures.")
+
+        return imid2path
 
     # Ensure other necessary methods from KeypointTopDownCocoDataset are inherited
     # or defined if they need custom behavior. For example, __len__ and __getitem__.
@@ -64,46 +65,7 @@ class CustomKeypointDataset(KeypointTopDownCocoDataset):
         # Or return 0 if db is the sole source of length info in this custom class
         return 0
 
-# --- The second, incorrect class definition below should be REMOVED ---
-# class CustomKeypointDataset: # <--- REMOVE THIS BLOCK
-#     def __init__(self, **kwargs):
-#         super(CustomKeypointDataset, self).__init__(**kwargs)
-#         # Add any custom initialization here if needed
-#     def get_imid2path(self):
-#         """
-#         Returns a dictionary mapping image IDs to their file paths.
-#         Adjust the implementation based on how your dataset handles image IDs and paths.
-#         """
-#         imid2path = {}
-#         # Example: Assuming self.roidbs holds image information
-#         # You might need to adapt this based on your actual class structure
-#         if hasattr(self, 'roidbs') and self.roidbs:
-#              for record in self.roidbs:
-#                  # Assuming 'id' and 'im_file' keys exist in your records
-#                  if 'id' in record and 'im_file' in record:
-#                      imid2path[record['id']] = record['im_file']
-#                  # If your dataset doesn't use 'id', you might need to generate
-#                  # sequential IDs or use filenames as keys if appropriate.
-#                  # Example using index as ID if 'id' is missing:
-#                  # elif 'im_file' in record:
-#                  #    image_index = self.roidbs.index(record) # Or some other unique index
-#                  #    imid2path[image_index] = record['im_file']
-# 
-#         # If your dataset doesn't load annotations during inference (e.g., only image files),
-#         # you might need to build this mapping differently, perhaps by listing files
-#         # in the image directory.
-#         # Example:
-#         # image_dir = os.path.join(self.dataset_dir, self.image_dir)
-#         # image_files = [f for f in os.listdir(image_dir) if f.lower().endswith(('.png', '.jpg', '.jpeg'))]
-#         # for i, fname in enumerate(image_files):
-#         #     imid2path[i] = os.path.join(image_dir, fname)
-# 
-# 
-#         if not imid2path:
-#              print("Warning: get_imid2path() is returning an empty dictionary. "
-#                    "Ensure your CustomKeypointDataset correctly loads or generates image paths and IDs.")
-# 
-#         return imid2path
+
 
     def set_images(self, image_paths, **kwargs): # Accept extra keyword arguments
         """Set custom image paths for inference"""
