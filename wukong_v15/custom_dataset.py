@@ -1,20 +1,28 @@
 from ppdet.core.workspace import register
 from ppdet.data.source.keypoint_coco import KeypointTopDownCocoDataset
 import copy
+import os # Added import
+import numpy as np # Added import
 
 @register
 class CustomKeypointDataset(KeypointTopDownCocoDataset):
-    def __init__(self, **kwargs):
-        super(CustomKeypointDataset, self).__init__(**kwargs)
-        # Add any custom initialization here if needed
+    # Note: The first __init__ below is overridden by the second one.
+    # Consider removing the first one if it's not needed.
+    # def __init__(self, **kwargs):
+    #     super(CustomKeypointDataset, self).__init__(**kwargs)
+    #     # Add any custom initialization here if needed
 
-    # Add any custom methods here if needed
     """Custom dataset class with dynamic image setting capability"""
-    
+
     def __init__(self, *args, **kwargs):
+        # Remove 'type' and potentially 'name' and 'module' if they cause issues,
+        # as they are often part of the configuration but not direct init parameters.
+        kwargs.pop('type', None)
+        kwargs.pop('name', None)
+        kwargs.pop('module', None)
         super().__init__(*args, **kwargs)
         self.custom_images = []
-    
+
     def set_images(self, image_paths):
         """Set custom image paths for inference"""
         self.custom_images = image_paths
