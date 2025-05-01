@@ -149,7 +149,7 @@ TestReader:  # Fix indentation here (remove 2 spaces)
     image_shape: [256, 192, 3]
   sample_transforms:
     - Decode: {}
-    - AddImageKey: {}
+    # - AddImageKey: {}  # Remove this line
     - TopDownAffine:
         trainsize: *trainsize
         use_udp: true
