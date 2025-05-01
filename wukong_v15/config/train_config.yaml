@@ -4,12 +4,13 @@ Global:
   train_list: data/itx/train.json
   val_list: data/itx/val.json
   label_list: data/itx/labels.txt
-  save_dir: output/resnet50
-  num_epochs: 50
-  train_batch_size: 32
-  learning_rate: 0.01
+  save_dir: output/tinypose_itx
+  num_epochs: 100
+  train_batch_size: 8
+  learning_rate: 0.001
   use_vdl: true
 
 Model:
-  type: image_classification
-  name: ResNet50
+  type: keypoint_detection
+  name: PP-TinyPose
+  num_joints: 6  # Number of keypoints for ITX boards

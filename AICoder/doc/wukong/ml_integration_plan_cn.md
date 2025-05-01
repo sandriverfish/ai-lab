@@ -39,6 +39,61 @@
 - 良好的文档和社区支持
 - 支持模型量化和优化
 
+### 检测+定位方法
+目标检测+关键点检测，推荐使用 PP-YOLOE + RT-POSE 模型，这是PaddleDetection中结合目标检测和关键点检测的优秀方案。
+
+数据标注要求
+* 使用COCO格式进行标注
+* 标注内容包括：
+   * 整机bbox标注（itx_board的边界框）
+   * 各个接口/零件的关键点标注（memory_slot, usb_port等位置）
+* 每个关键点需要标注：
+   * 点的坐标(x,y)
+   * 可见性标志(v)：
+      * v=2: 可见且被标注
+      * v=1: 被遮挡但被标注
+      * v=0: 不可见/未标注
+
+{
+    "images": [{
+        "id": 1,
+        "file_name": "itx1.jpg",
+        "width": 1920,
+        "height": 1080
+    }],
+    "annotations": [{
+        "id": 1,
+        "image_id": 1,
+        "category_id": 1,
+        "bbox": [x, y, width, height],
+        "keypoints": [
+            x1, y1, v1,  // memory_slot
+            x2, y2, v2,  // usb_port
+            x3, y3, v3,  // hdmi_port
+            ...
+        ]
+    }]
+}
+
+这个方案的优势：
+
+可以同时获得整机检测和零件定位能力
+RT-POSE模型具有较好的实时性能
+支持遮挡情况下的零件定位
+建议：
+
+先收集100-200张图片进行标注测试
+验证标注质量和模型效果
+根据测试结果调整标注策略和模型配置
+扩大数据集规模进行正式训练
+
+```
+python3 -c "import ppdet; print('PaddleDetection 安装正常')"
+
+python3 /home/nvidia/ai-lab/PaddleX/paddlex/repo_manager/repos/PaddleDetection/tools/train.py -c /home/nvidia/ai-lab/wukong_v15/config/ppyoloe_rtpose.yaml
+
+```
+
 ### 2.2 混合识别方法
 
 我们将实现一种混合方法，结合：

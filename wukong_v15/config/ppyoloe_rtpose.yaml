@@ -1,0 +1,102 @@
+architecture: PPYOLOEWithKeypoint
+pretrain_weights: https://bj.bcebos.com/v1/paddledet/models/ppyoloe_plus_crn_l_80e_coco.pdparams
+
+num_classes: 1  # ITX板卡检测
+num_keypoints: 6  # 6个接口点
+
+CSPResNet:
+  return_idx: [1, 2, 3]
+  use_alpha: True
+
+CSPPAN:
+  channel_attention: True
+  use_alpha: True
+
+PPYOLOEHead:
+  static_assigner_epoch: -1
+  nms:
+    name: MultiClassNMS
+    nms_top_k: 1000
+    keep_top_k: 100
+    score_threshold: 0.01
+    nms_threshold: 0.6
+
+KeypointRTHead:
+  num_keypoints: 6
+  heatmap_size: [128, 128]
+  loss_weight: 1.0
+  keypoint_loss:
+    name: KeyPointMSELoss
+
+epoch: 100
+LearningRate:
+  base_lr: 0.001
+  schedulers:
+    - name: CosineDecay
+      max_epochs: 100
+    - name: LinearWarmup
+      start_factor: 0.0
+      epochs: 5
+
+TrainDataset:
+  name: COCODataSet
+  dataset_dir: /home/nvidia/ai-lab/wukong_v15/data/itx
+  anno_path: train.json
+  image_dir: images
+  data_fields: ['image', 'gt_bbox', 'gt_keypoint', 'is_crowd']
+
+EvalDataset:
+  name: COCODataSet
+  dataset_dir: /home/nvidia/ai-lab/wukong_v15/data/itx
+  anno_path: val.json
+  image_dir: images
+  data_fields: ['image', 'gt_bbox', 'gt_keypoint']
+
+worker_num: 4
+eval_height: &eval_height 640
+eval_width: &eval_width 640
+eval_size: &eval_size [*eval_height, *eval_width]
+
+TrainReader:
+  batch_size: 8
+  sample_transforms:
+    - Decode: {}
+    - RandomFlip: {prob: 0.5}
+    - RandomDistort: {}
+    - RandomCrop: {}
+    - Resize: {target_size: *eval_size, keep_ratio: False}
+  batch_transforms:
+    - NormalizeImage: {mean: [123.675, 116.28, 103.53], std: [58.395, 57.12, 57.375], is_scale: false}
+    - Permute: {}
+    - PadGT: {}
+
+EvalReader:
+  batch_size: 1
+  sample_transforms:
+    - Decode: {}
+    - Resize: {target_size: *eval_size, keep_ratio: False}
+  batch_transforms:
+    - NormalizeImage: {mean: [123.675, 116.28, 103.53], std: [58.395, 57.12, 57.375], is_scale: false}
+    - Permute: {}
+
+TestReader:
+  batch_size: 1
+  sample_transforms:
+    - Decode: {}
+    - Resize: {target_size: *eval_size, keep_ratio: False}
+  batch_transforms:
+    - NormalizeImage: {mean: [123.675, 116.28, 103.53], std: [58.395, 57.12, 57.375], is_scale: false}
+    - Permute: {}
+
+use_gpu: true
+use_xpu: false
+log_iter: 20
+save_dir: output
+snapshot_epoch: 1
+print_flops: false
+find_unused_parameters: True
+use_ema: true
+ema_decay: 0.9998
+save_prediction_only: True
+
+metrics: ['bbox', 'keypoint']

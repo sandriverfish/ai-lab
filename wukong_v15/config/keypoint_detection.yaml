@@ -1,0 +1,32 @@
+Global:
+  model: PP-TinyPose_256x192  # Using higher resolution version for better accuracy
+  mode: train # check_dataset/train/evaluate/predict
+  dataset_dir: "data/itx"  # Directory containing train.json
+  device: gpu:0
+  output: "output/keypoint_detection"
+
+Train:
+  num_classes: 1  # 1 class - itx_board
+  num_joints: 6   # 6 keypoints as defined in the dataset
+  epochs_iters: 100
+  batch_size: 8
+  learning_rate: 0.001
+  pretrain_weight_path: "https://paddle-model-ecology.bj.bcebos.com/paddlex/official_pretrained_model/PP-TinyPose_256x192_pretrained.pdparams"
+  warmup_steps: 100
+  resume_path: null
+  log_interval: 10
+  eval_interval: 1
+
+Evaluate:
+  weight_path: "output/keypoint_detection/best_model/best_model.pdparams"
+  log_interval: 10
+
+Predict:
+  batch_size: 1
+  model_dir: "output/keypoint_detection/best_model/inference"
+  input: null
+  kernel_option:
+    run_mode: paddle
+
+Export:
+  weight_path: "output/keypoint_detection/best_model/best_model.pdparams"

@@ -1,0 +1,87 @@
+save_dir: output/higherhrnet
+architecture: HigherHRNet
+pretrain_weights: https://paddledet.bj.bcebos.com/models/keypoint/higherhrnet_hrnet_w32_512.pdparams
+
+use_gpu: true
+log_iter: 20
+save_interval: 1
+snapshot_epoch: 5
+
+metric: KeyPointTopDownCOCOEval
+num_joints: 6
+train_height: &train_height 256
+train_width: &train_width 256
+trainsize: &trainsize [*train_width, *train_height]
+hmsize: &hmsize [64, 64]
+pixel_std: 200
+use_dark: true
+
+HRNet:
+  width: 32
+  freeze_at: 0
+  return_idx: [0, 1, 2, 3]
+
+HigherHRNetHead:
+  num_joints: 6
+  heatmap_size: *hmsize
+  use_dark: true
+
+TrainDataset:
+  !KeypointTopDownCocoDataset
+    image_dir: images
+    anno_path: train.json
+    dataset_dir: /home/nvidia/ai-lab/wukong_v15/data/itx
+    num_joints: 6
+    trainsize: *trainsize
+    pixel_std: 200
+    use_gt_bbox: True
+
+EvalDataset:
+  !KeypointTopDownCocoDataset
+    image_dir: images  
+    anno_path: val.json
+    dataset_dir: /home/nvidia/ai-lab/wukong_v15/data/itx
+    num_joints: 6
+    trainsize: *trainsize
+    pixel_std: 200
+    use_gt_bbox: True
+
+worker_num: 4
+global_mean: [0.485, 0.456, 0.406]
+global_std: [0.229, 0.224, 0.225]
+
+TrainReader:
+  batch_size: 16
+  shuffle: true
+  sample_transforms:
+    - Decode: {}
+    - RandomFlip: {prob: 0.5}
+    - TopDownAffine: {trainsize: *trainsize}
+    - ToHeatmaps: {hmsize: *hmsize, sigma: 2, num_joints: 6}
+  batch_transforms:
+    - NormalizeImage: {mean: [0.485, 0.456, 0.406], std: [0.229, 0.224, 0.225]}
+    - Permute: {}
+
+EvalReader:
+  batch_size: 16
+  sample_transforms:
+    - Decode: {}
+    - TopDownAffine: {trainsize: *trainsize}
+    - ToHeatmaps: {hmsize: *hmsize, sigma: 2, num_joints: 6}
+  batch_transforms:
+    - NormalizeImage: {mean: [0.485, 0.456, 0.406], std: [0.229, 0.224, 0.225]}
+    - Permute: {}
+
+LearningRate:
+  base_lr: 0.001
+  schedulers:
+  - !CosineDecay
+    max_epochs: 100
+  - !LinearWarmup
+    start_factor: 0.001
+    epochs: 5
+
+OptimizerBuilder:
+  optimizer:
+    type: Adam
+    weight_decay: 0.0001
