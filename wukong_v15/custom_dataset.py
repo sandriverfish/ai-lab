@@ -118,51 +118,45 @@ class CustomKeypointDataset(KeypointTopDownCocoDataset):
                         logger.info(f"Visualization received {len(results)} results")
                         
                         # Modify the results to avoid index errors
-                        for i, result in enumerate(results):
-                            logger.info(f"Processing result {i}")
-                            
-                            # Log keypoints info if available
-                            if 'keypoints' in result:
-                                kp_len = len(result['keypoints'])
-                                logger.info(f"Result {i} has {kp_len} keypoint values (expected {num_keypoints*3})")
-                                
-                                # Ensure keypoints array doesn't exceed our model's capacity
-                                if kp_len > num_keypoints * 3:
-                                    # Truncate keypoints to match our model's capacity
-                                    result['keypoints'] = result['keypoints'][:num_keypoints * 3]
-                                    logger.info(f"Truncated keypoints to {num_keypoints*3} values")
-                                elif kp_len < num_keypoints * 3:
-                                    # If we have fewer keypoints than expected, pad with zeros
-                                    logger.warning(f"Result {i} has fewer keypoints than expected, padding with zeros")
-                                    padding = [0.0] * (num_keypoints * 3 - kp_len)
-                                    result['keypoints'] = list(result['keypoints']) + padding
-                            else:
-                                logger.warning(f"Result {i} has no 'keypoints' field, creating empty keypoints array")
-                                # Create empty keypoints array with the right size
-                                result['keypoints'] = [0.0] * (num_keypoints * 3)
-                            
-                            # Log skeleton info if available
+                        def preprocess_keypoints(self, results):
+                            """Preprocess keypoints to match the expected format and number of keypoints."""
+                            num_keypoints = self.ann_info['num_joints']
+                            for i, result in enumerate(results):
+                                if 'keypoints' in result:
+                                    kp_len = len(result['keypoints'])
+                                    if kp_len > num_keypoints * 3:
+                                        result['keypoints'] = result['keypoints'][:num_keypoints * 3]
+                                    elif kp_len < num_keypoints * 3:
+                                        padding = [0.0] * (num_keypoints * 3 - kp_len)
+                                        result['keypoints'] = list(result['keypoints']) + padding
+                                else:
+                                    result['keypoints'] = [0.0] * (num_keypoints * 3)
+                        
                             if 'skeleton' in result:
-                                logger.info(f"Original skeleton: {result['skeleton']}")
-                            
-                            # Create a safe skeleton that only uses available keypoints
-                            safe_skeleton = []
-                            # Only create connections between consecutive points up to our available keypoints
-                            for j in range(num_keypoints - 1):
-                                safe_skeleton.append([j, j+1])
-                            
-                            # Replace the skeleton in the result or add it if missing
-                            if 'skeleton' in result:
+                                safe_skeleton = [[j, j+1] for j in range(num_keypoints - 1)]
                                 result['skeleton'] = safe_skeleton
-                                logger.info(f"Set custom skeleton with {len(safe_skeleton)} connections")
                             else:
-                                logger.info(f"Adding missing skeleton field with {len(safe_skeleton)} connections")
-                                result['skeleton'] = safe_skeleton
-                            
-                            # Ensure num_joints matches our model
+                                result['skeleton'] = [[j, j+1] for j in range(num_keypoints - 1)]
+                        
                             if 'num_joints' in result and result['num_joints'] != num_keypoints:
-                                logger.info(f"Adjusting num_joints from {result['num_joints']} to {num_keypoints}")
                                 result['num_joints'] = num_keypoints
+                        
+                            if 'score' not in result or result['score'] is None:
+                                result['score'] = 0.9
+                        
+                            if 'category_id' not in result:
+                                result['category_id'] = 1
+                        
+                            if 'keypoint_scores' in result:
+                                if len(result['keypoint_scores']) > num_keypoints:
+                                    result['keypoint_scores'] = result['keypoint_scores'][:num_keypoints]
+                                elif len(result['keypoint_scores']) < num_keypoints:
+                                    padding = [0.9] * (num_keypoints - len(result['keypoint_scores']))
+                                    result['keypoint_scores'] = list(result['keypoint_scores']) + padding
+                            else:
+                                result['keypoint_scores'] = [0.9] * num_keypoints
+                        
+                        return results
                         
                         # Add additional safety checks before calling original function
                         # Ensure all results have valid score values
