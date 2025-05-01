@@ -83,14 +83,17 @@ EvalDataset:
     image_thre: 0.5
 
 TestDataset:
-  !KeypointTopDownCocoDataset
-    image_dir: images
-    anno_path: val.json
-    dataset_dir: /home/nvidia/ai-lab/wukong_v15/data/itx
-    num_joints: *num_joints
-    trainsize: *trainsize
-    pixel_std: *pixel_std
-    use_gt_bbox: True
+  type: CustomKeypointDataset  # Revert to custom type
+  module: wukong_v15.custom_dataset # Specify the module
+  name: CustomKeypointDataset      # Keep the name parameter
+  # --- Parameters expected by CustomKeypointDataset ---
+  image_dir: images
+  anno_path: val.json             # This might not be used for --infer_img but should be present
+  dataset_dir: /home/nvidia/ai-lab/wukong_v15/data/itx
+  num_joints: *num_joints
+  trainsize: *trainsize
+  pixel_std: *pixel_std
+  use_gt_bbox: True
 
 worker_num: 2
 global_mean: &global_mean [0.485, 0.456, 0.406]
