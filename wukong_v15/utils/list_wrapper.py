@@ -13,25 +13,15 @@ class ImageListWrapper(list):
     
     def save(self, path, quality=95, **kwargs):
         """
-        Save the first valid image in the list to the specified path.
+        No-op save method that skips actual file saving.
         
         Args:
-            path (str): The file path where the image should be saved
-            quality (int): The quality setting for JPEG images (1-100)
-            **kwargs: Additional arguments to pass to the save method
+            path (str): The file path where the image would have been saved (ignored)
+            quality (int): The quality setting for JPEG images (ignored)
+            **kwargs: Additional arguments (ignored)
         """
-        # Use the ImageSaver utility to handle the saving logic
-        try:
-            ImageSaver.save_image(self, path, quality)
-        except Exception as e:
-            print(f"ImageListWrapper caught exception: {e}")
-            # Fallback: try to save the first item if it's an image
-            if len(self) > 0 and hasattr(self[0], 'save'):
-                self[0].save(path, quality=quality, **kwargs)
-            else:
-                print(f"Warning: Could not save image at {path}. Object is not a valid image or list of images.")
-                # Re-raise if we can't handle it
-                raise
+        print(f"[DEBUG] Image saving disabled - would have saved to: {path}")
+        return
 
 def wrap_image_list(image_list):
     """
