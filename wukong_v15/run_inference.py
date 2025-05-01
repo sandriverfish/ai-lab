@@ -156,13 +156,29 @@ def patch_infer_script():
         with open(infer_script_path, 'r') as f:
             script_content = f.read()
         
+        # Extract any __future__ imports from the original script
+        future_imports = []
+        for line in script_content.split('\n'):
+            if line.strip().startswith('from __future__'):
+                future_imports.append(line)
+        
+        # Remove the __future__ imports from the original content
+        for imp in future_imports:
+            script_content = script_content.replace(imp, '')
+        
         # Check if the script contains visualization code
         if 'visualize' in script_content or 'draw' in script_content:
             # Create a temporary patched version of the script
             patched_script_path = os.path.join(os.path.dirname(infer_script_path), 'patched_infer.py')
             
-            # Add our wrapper import at the top of the script
-            patched_content = f"""import sys
+            # Add our wrapper import at the top of the script, with __future__ imports first
+            patched_content = ""
+            # Add any __future__ imports first
+            if future_imports:
+                patched_content += '\n'.join(future_imports) + '\n\n'
+            
+            # Add our custom imports and functions
+            patched_content += f"""import sys
 sys.path.append('{os.path.dirname(os.path.abspath(__file__))}')
 from wukong_v15.utils.list_wrapper import wrap_image_list
 
@@ -173,7 +189,7 @@ def wrap_results(results):
         return ImageListWrapper(results)
     return results
 
-{script_content}"""
+{script_content.strip()}"""
             
             # Write the patched script
             with open(patched_script_path, 'w') as f:
