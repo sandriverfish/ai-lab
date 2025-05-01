@@ -149,11 +149,11 @@ TestReader:  # Fix indentation here (remove 2 spaces)
     image_shape: [256, 192, 3]
   sample_transforms:
     - Decode: {}
-    # - AddImageKey: {}  # Remove this line
+    # - AddImageKey: {}
     - TopDownAffine:
         trainsize: *trainsize
         use_udp: true
-        with_joints: false
+        # with_joints: false  # Remove this line
     - NormalizeImage:
         mean: *global_mean
         std: *global_std
