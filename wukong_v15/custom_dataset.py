@@ -30,63 +30,11 @@ class CustomKeypointDataset(KeypointTopDownCocoDataset):
         # If --infer_img is used, self.custom_images should be populated
         if hasattr(self, 'custom_images') and self.custom_images:
             # For inference on specific images, create mapping based on these
-            for i, img_path in enumerate(self.custom_images):
-                 # Use index or a generated ID if no natural ID exists
-                 imid2path[i] = os.path.abspath(img_path) # Ensure absolute path
-            print(f"get_imid2path: Using custom_images for mapping. Found {len(imid2path)} images.")
-            return imid2path
-
-        # Fallback: Try using self.roidbs if available (e.g., during evaluation on val set)
-        if hasattr(self, 'roidbs') and self.roidbs:
-             print(f"get_imid2path: Falling back to self.roidbs. Found {len(self.roidbs)} records.")
-             for i, record in enumerate(self.roidbs):
-                 img_id = record.get('id', i) # Use 'id' if present, else index
-                 img_file = record.get('im_file')
-                 if img_file:
-                     # Ensure the path is absolute, relative to dataset_dir if needed
-                     if not os.path.isabs(img_file) and hasattr(self, 'dataset_dir'):
-                         img_file = os.path.join(self.dataset_dir, img_file)
-                     imid2path[img_id] = os.path.abspath(img_file) # Store absolute path
-             print(f"get_imid2path: Built mapping from roidbs. Found {len(imid2path)} images.")
-             return imid2path
-
-        # If neither custom_images nor roidbs provide paths, log a warning.
-        # This might happen if the dataset is initialized for a mode where
-        # image paths aren't immediately needed or loaded.
-        print("Warning: get_imid2path() could not determine image paths from "
-              "custom_images or roidbs. Returning empty dictionary.")
-        return imid2path
-
-
-    def set_images(self, image_paths, **kwargs): # Accept extra keyword arguments
-        """Set custom image paths for inference"""
-        print(f"Setting custom images: {image_paths}") # Debug print
-        if isinstance(image_paths, str):
-            image_paths = [image_paths] # Ensure it's a list
-        self.custom_images = [os.path.abspath(p) for p in image_paths] # Store absolute paths
-
-        # Override the parse_dataset method to use our custom images
-        # This is crucial for inference mode when --infer_img is used
-        def custom_parse_dataset(self):
-            print("Using custom_parse_dataset for inference.") # Debug print
-            self.db = []
-            # Ensure ann_info is initialized if needed by downstream processing
-            if not hasattr(self, 'ann_info'):
-                 # Initialize with defaults or load from config if necessary
-                 # This might need adjustment based on KeypointTopDownCocoDataset's needs
-                 self.ann_info = {'num_joints': kwargs.get('num_joints', 6)} # Example: get num_joints from init kwargs
-                 print(f"Initialized self.ann_info: {self.ann_info}")
-
-
-            num_joints = self.ann_info.get('num_joints', 0) # Get num_joints safely
-            if num_joints == 0:
-                print("Warning: num_joints is 0 in custom_parse_dataset. Check dataset initialization.")
-
-
-            for img_path in self.custom_images:
+            for i, img_path in enumerate(self.custom_images): # Add index 'i'
                 # Create dummy annotation data for single image inference
                 # The structure should match what the transforms expect
                 dummy_ann = {
+                    'im_id': i, # Add image ID using the index
                     'image': img_path, # Use 'image' key as often expected by transforms
                     'image_file': img_path, # Keep original key too if needed
                     'bbox': np.array([0, 0, 10, 10], dtype=np.float32), # Dummy bbox, might be refined later
