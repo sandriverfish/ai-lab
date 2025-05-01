@@ -85,6 +85,7 @@ EvalDataset:
 TestDataset:
   type: CustomKeypointDataset
   module: wukong_v15.custom_dataset
+  name: CustomKeypointDataset  # Add this line
   image_dir: images
   anno_path: val.json
   dataset_dir: /home/nvidia/ai-lab/wukong_v15/data/itx
@@ -142,20 +143,20 @@ EvalReader:
     - Permute: {}
   batch_size: 8
 
-  TestReader:
+TestReader:  # Fix indentation here (remove 2 spaces)
   inputs_def:
     image_shape: [256, 192, 3]
   sample_transforms:
     - Decode: {}
-    - AddImageKey: {}  # Critical: Create 'image' key immediately after decode
+    - AddImageKey: {}
     - TopDownAffine:
-        trainsize: *trainsize  # Use config variable instead of hardcoded values
+        trainsize: *trainsize
         use_udp: true
         with_joints: false
     - NormalizeImage:
-        mean: *global_mean  # Use config variable instead of hardcoded values
+        mean: *global_mean
         std: *global_std
         is_scale: true
-    - Permute: {}  # Final tensor conversion
+    - Permute: {}
   batch_size: 1
   fuse_normalize: false
