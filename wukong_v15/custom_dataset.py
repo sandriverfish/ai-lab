@@ -22,7 +22,48 @@ class CustomKeypointDataset(KeypointTopDownCocoDataset):
         kwargs.pop('module', None)
         super().__init__(*args, **kwargs)
         self.custom_images = []
+# Inside wukong_v15/custom_dataset.py
 
+class CustomKeypointDataset:
+    # ... existing code ...
+
+    def get_imid2path(self):
+        """
+        Returns a dictionary mapping image IDs to their file paths.
+        Adjust the implementation based on how your dataset handles image IDs and paths.
+        """
+        imid2path = {}
+        # Example: Assuming self.roidbs holds image information
+        # You might need to adapt this based on your actual class structure
+        if hasattr(self, 'roidbs') and self.roidbs:
+             for record in self.roidbs:
+                 # Assuming 'id' and 'im_file' keys exist in your records
+                 if 'id' in record and 'im_file' in record:
+                     imid2path[record['id']] = record['im_file']
+                 # If your dataset doesn't use 'id', you might need to generate
+                 # sequential IDs or use filenames as keys if appropriate.
+                 # Example using index as ID if 'id' is missing:
+                 # elif 'im_file' in record:
+                 #    image_index = self.roidbs.index(record) # Or some other unique index
+                 #    imid2path[image_index] = record['im_file']
+
+        # If your dataset doesn't load annotations during inference (e.g., only image files),
+        # you might need to build this mapping differently, perhaps by listing files
+        # in the image directory.
+        # Example:
+        # image_dir = os.path.join(self.dataset_dir, self.image_dir)
+        # image_files = [f for f in os.listdir(image_dir) if f.lower().endswith(('.png', '.jpg', '.jpeg'))]
+        # for i, fname in enumerate(image_files):
+        #     imid2path[i] = os.path.join(image_dir, fname)
+
+
+        if not imid2path:
+             print("Warning: get_imid2path() is returning an empty dictionary. "
+                   "Ensure your CustomKeypointDataset correctly loads or generates image paths and IDs.")
+
+        return imid2path
+
+    # ... rest of the class ...
     def set_images(self, image_paths, **kwargs): # Accept extra keyword arguments
         """Set custom image paths for inference"""
         self.custom_images = image_paths
