@@ -1,7 +1,14 @@
+from ppdet.core.workspace import register
 from ppdet.data.source.keypoint_coco import KeypointTopDownCocoDataset
 import copy
 
+@register
 class CustomKeypointDataset(KeypointTopDownCocoDataset):
+    def __init__(self, **kwargs):
+        super(CustomKeypointDataset, self).__init__(**kwargs)
+        # Add any custom initialization here if needed
+
+    # Add any custom methods here if needed
     """Custom dataset class with dynamic image setting capability"""
     
     def __init__(self, *args, **kwargs):
