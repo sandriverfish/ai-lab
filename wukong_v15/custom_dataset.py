@@ -23,7 +23,7 @@ class CustomKeypointDataset(KeypointTopDownCocoDataset):
         super().__init__(*args, **kwargs)
         self.custom_images = []
 
-    def set_images(self, image_paths):
+    def set_images(self, image_paths, **kwargs): # Accept extra keyword arguments
         """Set custom image paths for inference"""
         self.custom_images = image_paths
         # Override the parse_dataset method to use our custom images
