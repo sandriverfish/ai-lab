@@ -41,8 +41,12 @@ class CustomKeypointDataset(KeypointTopDownCocoDataset):
                      imid2path[record['id']] = record['im_file']
         elif hasattr(self, 'db') and self.db: # If db populated by custom_parse_dataset
             for i, ann in enumerate(self.db):
-                # Assuming 'image_file' holds the path and we use index as ID for custom images
-                imid2path[i] = ann.get('image_file', ann.get('image'))
+                # Use the im_id we added in set_images method if available
+                if 'im_id' in ann and ('image_file' in ann or 'image' in ann):
+                    imid2path[ann['im_id']] = ann.get('image_file', ann.get('image'))
+                # Fallback to using index as ID if im_id is not present
+                elif 'image_file' in ann or 'image' in ann:
+                    imid2path[i] = ann.get('image_file', ann.get('image'))
 
         if not imid2path and hasattr(self, 'custom_images') and self.custom_images:
              print("Warning: get_imid2path() called but custom_images are set. "
@@ -73,12 +77,13 @@ class CustomKeypointDataset(KeypointTopDownCocoDataset):
         # Override the parse_dataset method to use our custom images
         def custom_parse_dataset(self):
             self.db = []
-            for img_path in self.custom_images:
+            for i, img_path in enumerate(self.custom_images):
                 # Create dummy annotation data for single image inference
                 img_name = os.path.basename(img_path)
                 # Use absolute path to avoid directory issues
                 dummy_ann = {
                     'image_file': os.path.abspath(img_path),
+                    'im_id': i,  # Add image ID for inference pipeline
                     'center': np.array([0, 0]),  # Will be calculated later
                     'scale': np.array([0, 0]),    # Will be calculated later
                     'gt_joints': np.zeros((self.ann_info['num_joints'], 3), dtype=np.float32),
